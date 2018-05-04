@@ -60,6 +60,9 @@ fn testit(n: u32) {
                 if let Err(e) = fs::remove_file(&dst) {
                     panic!("{} Error removing dst: {}", n, e);
                 }
+                if dst.exists() {
+                    panic!("{} Exists after remove!", n);
+                }
                 removed = true;
             }
             if let Err(e) = fs::hard_link(&src, &dst) {
