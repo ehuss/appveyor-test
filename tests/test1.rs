@@ -3,12 +3,38 @@ use std::fs;
 use std::path::PathBuf;
 
 #[test]
-fn testit() {
-    let dst = PathBuf::from("target/debug/appveyor-test");
+fn testit1() {
+    testit(1);
+}
+#[test]
+fn testit2() {
+    testit(2);
+}
+#[test]
+fn testit3() {
+    testit(3);
+}
+#[test]
+fn testit4() {
+    testit(4);
+}
+
+fn testit(n: u32) {
+    let root = PathBuf::from(format!("target/t{}", n));
+    if !root.exists() {
+        fs::create_dir(&root).unwrap();
+    }
+    let dst = root.join("appveyor-test");
     let bins = fs::read_dir("target/debug/deps")
         .unwrap()
         .map(|de| de.unwrap().path())
-        .filter(|path| path.file_name().unwrap().to_str().unwrap().starts_with("appveyor_test-"))
+        .filter(|path| {
+            path.file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .starts_with("appveyor_test-")
+        })
         .filter(|path| {
             if env::consts::EXE_SUFFIX.len() == 0 {
                 path.extension().is_none()
@@ -17,8 +43,14 @@ fn testit() {
             }
         })
         .collect::<Vec<_>>();
-
     assert_eq!(bins.len(), 2);
+    let bins = bins.iter()
+        .map(|path| {
+            let d = root.join(path.file_name().unwrap());
+            fs::copy(path, &d).unwrap();
+            d
+        })
+        .collect::<Vec<_>>();
 
     println!("bins={:?} dst={:?}", bins, dst);
     for n in 0..1000 {
