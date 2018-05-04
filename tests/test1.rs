@@ -53,7 +53,7 @@ fn testit(n: u32) {
         .collect::<Vec<_>>();
 
     println!("bins={:?} dst={:?}", bins, dst);
-    for n in 0..1000 {
+    for n in 0..100000 {
         for src in &bins {
             let mut removed = false;
             if dst.exists() {
@@ -68,14 +68,14 @@ fn testit(n: u32) {
             if let Err(e) = fs::hard_link(&src, &dst) {
                 panic!("{} Failed to hard link: {} {}", n, e, removed);
             }
-            let result = std::process::Command::new(&dst)
-                .stdin(std::process::Stdio::null())
-                .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .status();
-            if let Err(e) = result {
-                panic!("failed to run {:?} {} {}", dst, e, removed);
-            }
+            // let result = std::process::Command::new(&dst)
+            //     .stdin(std::process::Stdio::null())
+            //     .stdout(std::process::Stdio::null())
+            //     .stderr(std::process::Stdio::null())
+            //     .status();
+            // if let Err(e) = result {
+            //     panic!("failed to run {:?} {} {}", dst, e, removed);
+            // }
         }
     }
 }
