@@ -20,11 +20,11 @@ fn testit4() {
 }
 
 fn testit(n: u32) {
-    let root = PathBuf::from(format!("target/t{}", n));
+    let root = PathBuf::from("target").join(format!("t{}", n));
     if !root.exists() {
         fs::create_dir(&root).unwrap();
     }
-    let dst = root.join("appveyor-test");
+    let dst = root.join(format!("appveyor-test{}", env::consts::EXE_SUFFIX));
     let bins = fs::read_dir("target/debug/deps")
         .unwrap()
         .map(|de| de.unwrap().path())
@@ -71,7 +71,7 @@ fn testit(n: u32) {
                 .stderr(std::process::Stdio::null())
                 .status();
             if let Err(e) = result {
-                panic!("failed to run {} {}", e, removed);
+                panic!("failed to run {:?} {} {}", dst, e, removed);
             }
         }
     }
