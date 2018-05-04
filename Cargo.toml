@@ -1,0 +1,11 @@
+[package]
+name = "appveyor-test"
+version = "0.1.0"
+
+[dependencies]
+
+[features]
+foo = []
+
+[profile.dev]
+debug = false

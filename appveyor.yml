@@ -1,0 +1,38 @@
+# Based on the "trust" template v0.1.2
+# https://github.com/japaric/trust/tree/v0.1.2
+
+environment:
+  global:
+  # TODO This is the Rust channel that build jobs will use by default but can be
+  # overridden on a case by case basis down below
+    RUST_VERSION: stable
+
+    # TODO Update this to match the name of your project.
+    CRATE_NAME: appveyor-test
+
+    CARGO_INCREMENTAL: 0
+
+  # TODO These are all the build jobs. Adjust as necessary. Comment out what you
+  # don't need
+  matrix:
+    - TARGET: x86_64-pc-windows-msvc
+
+install:
+  - curl -sSf -o rustup-init.exe https://win.rustup.rs/
+  - rustup-init.exe -y --default-host %TARGET% --default-toolchain %RUST_VERSION%
+  - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - rustc -Vv
+  - cargo -V
+
+# TODO This is the "test phase", tweak it as you see fit
+test_script:
+  - cargo build
+  - cargo build --features foo
+  - cargo test --test test1 -- --nocapture
+
+cache:
+  - C:\Users\appveyor\.cargo
+  - target
+
+# Building is done in the test phase, so we disable Appveyor's build phase.
+build: false
