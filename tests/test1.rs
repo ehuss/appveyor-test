@@ -54,7 +54,7 @@ fn testit(n: u32) {
         .collect::<Vec<_>>();
 
     println!("bins={:?} dst={:?}", bins, dst);
-    for n in 0..10000 {
+    for n in 0..1000 {
         for src in &bins {
             let mut removed = false;
             if dst.exists() {
