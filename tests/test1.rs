@@ -1,5 +1,8 @@
+extern crate rand;
+use rand::Rng;
 use std::env;
 use std::fs;
+use std::io;
 use std::path::PathBuf;
 
 #[test]
@@ -55,26 +58,52 @@ fn testit(n: u32) {
     println!("bins={:?} dst={:?}", bins, dst);
     for n in 0..1000 {
         for src in &bins {
-            let mut removed = false;
-            if dst.exists() {
-                if let Err(e) = fs::remove_file(&dst) {
-                    panic!("{} Error removing dst: {}", n, e);
-                }
-                if dst.exists() {
-                    panic!("{} Exists after remove!", n);
-                }
-                removed = true;
-            }
+
             if let Err(e) = fs::hard_link(&src, &dst) {
-                panic!("{} Failed to hard link: {} {}", n, e, removed);
+                if e.kind() != io::ErrorKind::AlreadyExists {
+                    panic!("{} Failed to hard link: {}", n, e);
+                }
+                let parent = dst.parent().unwrap();
+                let mut tries = 100;
+                let tmpname = loop {
+                    let rname: String = rand::thread_rng().gen_ascii_chars().take(10).collect();
+                    let tmpname = parent.join(rname);
+                    match fs::hard_link(&src, &tmpname) {
+                        Ok(_) => break tmpname,
+                        Err(e) => {
+                            if e.kind() != io::ErrorKind::AlreadyExists {
+                                panic!("{} Failed to hard link: {}", n, e);
+                            }
+                        }
+                    }
+                    tries -= 1;
+                    if tries == 0 {
+                        panic!("Could not find random name.");
+                    }
+                };
+                if let Err(e) = fs::rename(&tmpname, &dst) {
+                    // This should unlink.
+                    panic!("Failed to rename temp {}", e);
+                }
+                // attempt to unlink, even on success, in case tmp==dst?
             }
+            // let mut removed = false;
+            // if dst.exists() {
+            //     if let Err(e) = fs::remove_file(&dst) {
+            //         panic!("{} Error removing dst: {}", n, e);
+            //     }
+            //     if dst.exists() {
+            //         panic!("{} Exists after remove!", n);
+            //     }
+            //     removed = true;
+            // }
             let result = std::process::Command::new(&dst)
                 .stdin(std::process::Stdio::null())
                 .stdout(std::process::Stdio::null())
                 .stderr(std::process::Stdio::null())
                 .status();
             if let Err(e) = result {
-                panic!("failed to run {:?} {} {}", dst, e, removed);
+                panic!("failed to run {:?} {}", dst, e);
             }
         }
     }
