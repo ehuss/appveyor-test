@@ -73,13 +73,11 @@ fn testit(n: u32) {
     for n in 0..5000 {
         for src in &bins {
             let mut removed = false;
+            let mut ps: Option<Vec<winhand::Process>> = None;
             if dst.exists() {
-                let ps = winhand::get_procs_using_path(&dst).unwrap();
-                if ps.len() != 0 {
-                    panic!("Found open procs: {:#?}", ps);
-                }
+                ps = Some(winhand::get_procs_using_path(&dst).unwrap());
                 if let Err(e) = fs::remove_file(&dst) {
-                    panic!("{} Error removing dst: {}", n, e);
+                    panic!("{} Error removing dst: {} {:#?}", n, e, ps);
                 }
                 if dst.exists() {
                     panic!("{} Exists after remove!", n);
@@ -87,7 +85,7 @@ fn testit(n: u32) {
                 removed = true;
             }
             if let Err(e) = fs::hard_link(&src, &dst) {
-                panic!("{} Failed to hard link: {} {}", n, e, removed);
+                panic!("{} Failed to hard link: {} {} {:#?}", n, e, removed, ps);
             }
             let result = std::process::Command::new(&dst)
                 .stdin(std::process::Stdio::null())
