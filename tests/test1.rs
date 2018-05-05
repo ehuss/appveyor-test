@@ -75,8 +75,8 @@ fn testit(n: u32) {
             let mut removed = false;
             let mut ps: Option<Vec<winhand::Process>> = None;
             if dst.exists() {
-                ps = Some(winhand::get_procs_using_path(&dst).unwrap());
                 if let Err(e) = fs::remove_file(&dst) {
+                    ps = Some(winhand::get_procs_using_path(&dst).unwrap());
                     panic!("{} Error removing dst: {} {:#?}", n, e, ps);
                 }
                 if dst.exists() {
@@ -85,6 +85,7 @@ fn testit(n: u32) {
                 removed = true;
             }
             if let Err(e) = fs::hard_link(&src, &dst) {
+                ps = Some(winhand::get_procs_using_path(&dst).unwrap());
                 panic!("{} Failed to hard link: {} {} {:#?}", n, e, removed, ps);
             }
             let result = std::process::Command::new(&dst)

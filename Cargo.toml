@@ -3,9 +3,9 @@ name = "appveyor-test"
 version = "0.1.0"
 
 [dependencies]
-winhand = {path="winhand"}
 
 [dev-dependencies]
+winhand = {path="winhand"}
 rand = "*"
 
 [features]
