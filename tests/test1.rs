@@ -1,8 +1,6 @@
-extern crate rand;
-use rand::Rng;
+extern crate winhand;
 use std::env;
 use std::fs;
-use std::io;
 use std::path::PathBuf;
 
 #[test]
@@ -20,6 +18,22 @@ fn testit3() {
 #[test]
 fn testit4() {
     testit(4);
+}
+#[test]
+fn testit5() {
+    testit(5);
+}
+#[test]
+fn testit6() {
+    testit(6);
+}
+#[test]
+fn testit7() {
+    testit(7);
+}
+#[test]
+fn testit8() {
+    testit(8);
 }
 
 fn testit(n: u32) {
@@ -56,54 +70,32 @@ fn testit(n: u32) {
         .collect::<Vec<_>>();
 
     println!("bins={:?} dst={:?}", bins, dst);
-    for n in 0..1000 {
+    for n in 0..5000 {
         for src in &bins {
-
-            if let Err(e) = fs::hard_link(&src, &dst) {
-                if e.kind() != io::ErrorKind::AlreadyExists {
-                    panic!("{} Failed to hard link: {}", n, e);
+            let mut removed = false;
+            if dst.exists() {
+                let ps = winhand::get_procs_using_path(&dst).unwrap();
+                if ps.len() != 0 {
+                    panic!("Found open procs: {:#?}", ps);
                 }
-                let parent = dst.parent().unwrap();
-                let mut tries = 100;
-                let tmpname = loop {
-                    let rname: String = rand::thread_rng().gen_ascii_chars().take(10).collect();
-                    let tmpname = parent.join(rname);
-                    match fs::hard_link(&src, &tmpname) {
-                        Ok(_) => break tmpname,
-                        Err(e) => {
-                            if e.kind() != io::ErrorKind::AlreadyExists {
-                                panic!("{} Failed to hard link: {}", n, e);
-                            }
-                        }
-                    }
-                    tries -= 1;
-                    if tries == 0 {
-                        panic!("Could not find random name.");
-                    }
-                };
-                if let Err(e) = fs::rename(&tmpname, &dst) {
-                    // This should unlink.
-                    panic!("Failed to rename temp {}", e);
+                if let Err(e) = fs::remove_file(&dst) {
+                    panic!("{} Error removing dst: {}", n, e);
                 }
-                // attempt to unlink, even on success, in case tmp==dst?
+                if dst.exists() {
+                    panic!("{} Exists after remove!", n);
+                }
+                removed = true;
             }
-            // let mut removed = false;
-            // if dst.exists() {
-            //     if let Err(e) = fs::remove_file(&dst) {
-            //         panic!("{} Error removing dst: {}", n, e);
-            //     }
-            //     if dst.exists() {
-            //         panic!("{} Exists after remove!", n);
-            //     }
-            //     removed = true;
-            // }
+            if let Err(e) = fs::hard_link(&src, &dst) {
+                panic!("{} Failed to hard link: {} {}", n, e, removed);
+            }
             let result = std::process::Command::new(&dst)
                 .stdin(std::process::Stdio::null())
                 .stdout(std::process::Stdio::null())
                 .stderr(std::process::Stdio::null())
                 .status();
             if let Err(e) = result {
-                panic!("failed to run {:?} {}", dst, e);
+                panic!("failed to run {:?} {} {}", dst, e, removed);
             }
         }
     }
